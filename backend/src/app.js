@@ -7,9 +7,15 @@ const metricaRoutes = require('./routes/metrica.routes');
 
 const app = express();
 
-// allow frontend to talk to this api
+// allow frontend to talk to this api - in demo mode accept any localhost port
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // allow requests with no origin (curl, mobile apps) or any localhost port
+    if (!origin || origin.startsWith('http://localhost')) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
 }));
 
 app.use(express.json());
