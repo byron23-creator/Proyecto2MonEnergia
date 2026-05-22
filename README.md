@@ -2,6 +2,11 @@
 
 Dashboard en tiempo real para monitoreo de nodos solares ficticios. Los nodos mandan datos cada 5 segundos, el backend los guarda en base de datos y los manda al dashboard por WebSockets sin necesidad de recargar la página.
 
+<img width="1895" height="896" alt="Captura de pantalla 2026-05-21 a la(s) 10 00 54 p  m" src="https://github.com/user-attachments/assets/d9b76ce6-123a-4a47-9516-dd277c88bafb" />
+
+<img width="1893" height="941" alt="Captura de pantalla 2026-05-21 a la(s) 9 59 24 p  m" src="https://github.com/user-attachments/assets/41b9a56d-4f14-411d-8f5c-e1ad1ef01100" />
+
+
 ## Arquitectura general
 
 ```
