@@ -1,0 +1,32 @@
+// Prisma schema for IoT energy monitoring project
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Nodo {
+  id          String       @id @default(uuid())
+  nombre      String
+  ubicacion   String
+  version_fw  String
+  metricas    MetricaLog[]
+  createdAt   DateTime     @default(now())
+}
+
+model MetricaLog {
+  id               String   @id @default(uuid())
+  timestamp        DateTime @default(now())
+  nodo_id          String
+  vatios_generados Float
+  voltaje          Float
+  status_code      Int
+  criticidad       String
+  mensaje          String
+
+  nodo Nodo @relation(fields: [nodo_id], references: [id])
+}
