@@ -6,6 +6,10 @@ Dashboard en tiempo real para monitoreo de nodos solares ficticios. Los nodos ma
 
 <img width="1893" height="941" alt="Captura de pantalla 2026-05-21 a la(s) 9 59 24 p  m" src="https://github.com/user-attachments/assets/41b9a56d-4f14-411d-8f5c-e1ad1ef01100" />
 
+## Video Demo
+
+[Ver video demo](https://drive.google.com/file/d/1I4f6t6E10l-WgHkAQcVY38NBtCPvMdEX/view?usp=drive_link)
+
 
 ## Arquitectura general
 
@@ -100,6 +104,6 @@ El simulador manda una métrica aleatoria cada 5 segundos a los 4 nodos registra
 ## Notas importantes
 
 - Los `.env` de backend y frontend **no se suben al repositorio** (están en .gitignore)
-- No se usan variables globales para el socket - el `io` instance se maneja dentro del ciclo de vida de Express y se pasa por props en React
+- No se usan variables globales para el socket - `io` se guarda en `app.set('io', io)` y se accede vía `req.app.get('io')` dentro del ciclo de vida de la petición Express; en el frontend se pasa por props en React
 - La base de datos SQLite se crea automáticamente al correr `npm run db:migrate`
 - El archivo `prisma/dev.db` tampoco se sube al repo
