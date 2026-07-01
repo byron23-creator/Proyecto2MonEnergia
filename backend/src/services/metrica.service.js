@@ -1,11 +1,9 @@
 const prisma = require('../config/prisma');
-const { getIO } = require('../config/socket');
 
 // save a new metric to db and emit socket event right away
-async function createMetrica(data) {
+// `io` comes from req.app.get('io') in the controller - not a global
+async function createMetrica(data, io) {
   const metrica = await prisma.metricaLog.create({ data });
-
-  const io = getIO();
 
   // emit to all connected clients
   io.emit('nueva_metrica', metrica);

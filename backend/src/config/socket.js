@@ -1,46 +1,60 @@
 const { Server } = require('socket.io');
-const { auth } = require('express-oauth2-jwt-bearer');
-
-// store io instance here so we can attach it to req inside express
-let io;
+const jwt = require('jsonwebtoken');
+const jwksClient = require('jwks-rsa');
 
 /**
  * Creates the socket.io server and attaches it to the http server.
  * We validate the JWT on the handshake so only auth users connect.
+ * No module-level state: the caller (server.js) stores the returned
+ * instance on `app` (app.set('io', io)) so it travels through the
+ * Express request lifecycle instead of living in a global variable.
  */
 function initSocket(httpServer) {
-  io = new Server(httpServer, {
+  const io = new Server(httpServer, {
     cors: {
       origin: process.env.FRONTEND_URL || 'http://localhost:5173',
       methods: ['GET', 'POST'],
     },
   });
 
-  // validate jwt on socket handshake
+  // fetch/cache Auth0's signing keys - used to verify the JWT signature below
+  const jwks = jwksClient({
+    jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
+    cache: true,
+  });
+
+  function getSigningKey(header, callback) {
+    jwks.getSigningKey(header.kid, (err, key) => {
+      if (err) return callback(err);
+      callback(null, key.getPublicKey());
+    });
+  }
+
+  // validate jwt on socket handshake against Auth0's JWKS directly -
+  // avoids depending on express-oauth2-jwt-bearer, which requires a real
+  // Express req/res and crashes when given a fake one
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
     if (!token) {
       return next(new Error('Auth token missing'));
     }
 
-    // manually verify the bearer token using the same logic as express middleware
-    // we just call the auth0 JWKS check by faking a tiny express-like flow
-    const fakeReq = {
-      headers: { authorization: `Bearer ${token}` },
-    };
-    const fakeRes = {};
-    const checkJwt = auth({
-      audience: process.env.AUTH0_AUDIENCE,
-      issuerBaseURL: `https://${process.env.AUTH0_DOMAIN}`,
-    });
-
-    checkJwt(fakeReq, fakeRes, (err) => {
-      if (err) {
-        return next(new Error('Invalid token'));
+    jwt.verify(
+      token,
+      getSigningKey,
+      {
+        audience: process.env.AUTH0_AUDIENCE,
+        issuer: `https://${process.env.AUTH0_DOMAIN}/`,
+        algorithms: ['RS256'],
+      },
+      (err, decoded) => {
+        if (err) {
+          return next(new Error('Invalid token'));
+        }
+        socket.user = decoded;
+        next();
       }
-      socket.user = fakeReq.auth;
-      next();
-    });
+    );
   });
 
   io.on('connection', (socket) => {
@@ -53,15 +67,4 @@ function initSocket(httpServer) {
   return io;
 }
 
-/**
- * Returns the io instance so services can emit events.
- * Throws if called before initSocket.
- */
-function getIO() {
-  if (!io) {
-    throw new Error('Socket.io not initialized yet');
-  }
-  return io;
-}
-
-module.exports = { initSocket, getIO };
+module.exports = { initSocket };

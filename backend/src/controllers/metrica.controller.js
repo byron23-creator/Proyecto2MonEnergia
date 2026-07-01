@@ -17,7 +17,7 @@ async function recibirMetrica(req, res) {
       status_code: status_code || 200,
       criticidad: criticidad || 'info',
       mensaje: mensaje || '',
-    });
+    }, req.app.get('io'));
 
     res.status(201).json(metrica);
   } catch (err) {
